@@ -166,13 +166,30 @@ export function ProjectProvider({ children, audio }) {
     return loaded;
   }, []);
 
+  // PUBLIC_INTERFACE
+  function renameTrack(trackId, newName) {
+    /**
+     * Renames a track by id and marks the project as dirty so autosave can persist it.
+     * Trims input and falls back to a sensible default if empty.
+     */
+    const safe = String(newName ?? '').trim();
+    const finalName = safe.length ? safe : 'Track';
+    setProject(prev => ({
+      ...prev,
+      tracks: prev.tracks.map(t => (t.id === trackId ? { ...t, name: finalName } : t)),
+      updatedAt: Date.now()
+    }));
+    dirtyRef.current = true;
+  }
+
   const value = useMemo(() => ({
     project, setProject,
     transport, setTransport,
     editor, setEditor,
     addTrack, removeTrack, addClip,
     setBpm, togglePlay, setPosition,
-    loadFromFile, exportAudio, saveProject, loadProject
+    loadFromFile, exportAudio, saveProject, loadProject,
+    renameTrack
   }), [project, transport, editor, addTrack, removeTrack, addClip, setBpm, togglePlay, setPosition, loadFromFile, exportAudio, saveProject, loadProject]);
 
   return (
