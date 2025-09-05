@@ -98,7 +98,74 @@
 
 .sidebar {
   padding: 12px;
-  overflow: auto;
+  /* Allow the sidebar content to size itself without forcing scrollbars for the header buttons area.
+     Timeline area may still scroll internally if content is very long. */
+  overflow: hidden;
+}
+
+/* Sidebar header row: make action buttons wrap fluidly without scrollbars */
+.sidebar .sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sidebar .sidebar-actions {
+  display: flex;
+  flex-wrap: wrap; /* key: allow wrapping to multiple rows */
+  gap: 8px;
+  /* Avoid horizontal scrollbars, let rows wrap */
+  max-width: 100%;
+}
+
+.sidebar .sidebar-actions .btn {
+  flex: 0 1 auto; /* allow buttons to shrink if needed */
+  min-width: 90px;
+}
+
+/* Track list container: allow internal scrolling while header stays clean */
+.sidebar .tracks-list {
+  margin-top: 12px;
+  display: grid;
+  /* Responsive columns: grow from 1 to 2 columns when wider, still fluid */
+  grid-template-columns: 1fr;
+  gap: 10px;
+  overflow: auto; /* allow track list itself to scroll if too long */
+  max-height: calc(100% - 44px); /* keep within sidebar */
+}
+
+/* Widen to two columns if space permits */
+@media (min-width: 360px) {
+  .sidebar .tracks-list {
+    grid-template-columns: 1fr;
+  }
+}
+@media (min-width: 520px) {
+  .sidebar .tracks-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Track item card stays visually consistent */
+.track-item {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 1px 2px var(--shadow);
+  /* Remove bottom margin because grid uses gap */
+  margin-bottom: 0;
+}
+
+/* Within each track item, control buttons should wrap instead of overflowing */
+.track-item .row {
+  flex-wrap: wrap;
+}
+
+.track-item .row .btn {
+  flex: 0 1 auto;
+  min-width: 80px;
 }
 
 .mixer {

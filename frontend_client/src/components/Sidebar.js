@@ -64,16 +64,17 @@ export default function Sidebar() {
 
   return (
     <div className="sidebar panel">
-      <div className="row" style={{ justifyContent: 'space-between' }}>
+      <div className="sidebar-header">
         <strong>Tracks</strong>
-        <div className="row">
+        <div className="sidebar-actions">
           <button className="btn" onClick={() => addTrack('audio')}>+ Audio</button>
           <button className="btn" onClick={() => addTrack('midi')}>+ Instrument</button>
           <button className="btn" onClick={() => fileRef.current?.click()} aria-label="Import audio">⬆ Import</button>
           <input ref={fileRef} type="file" accept="audio/*" style={{ display: 'none' }} onChange={onImportAudio} />
         </div>
       </div>
-      <div className="col" style={{ marginTop: 12 }}>
+
+      <div className="tracks-list">
         {project.tracks.map((t) => {
           const isEditing = editingId === t.id;
           return (
@@ -90,8 +91,6 @@ export default function Sidebar() {
                       onChange={(e) => setNameDraft(e.target.value)}
                       onKeyDown={onKeyDown}
                       onBlur={(e) => {
-                        // Prevent losing the draft when the user is clicking the Save button.
-                        // If focus is moving to a button with aria-label 'Save track name', we skip canceling.
                         const next = e.relatedTarget;
                         if (next && next.getAttribute && next.getAttribute('aria-label') === 'Save track name') {
                           return;
