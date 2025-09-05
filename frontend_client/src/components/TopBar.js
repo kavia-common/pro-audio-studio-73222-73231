@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
@@ -11,10 +11,26 @@ export default function TopBar() {
   const { theme, setTheme } = useTheme();
   const { user, login, logout, signup } = useAuth();
   const { project, setBpm, saveProject, loadProject } = useProject();
-  const [bpmInput, setBpmInput] = useState(project.bpm);
+  const [bpmInput, setBpmInput] = useState(String(project.bpm));
 
-  const handleBpm = (e) => setBpmInput(e.target.value);
-  const applyBpm = () => setBpm(Math.max(40, Math.min(240, Number(bpmInput) || 120)));
+  // Keep local BPM input synced when project.bpm changes externally (e.g., loading a project)
+  useEffect(() => {
+    setBpmInput(String(project.bpm));
+  }, [project.bpm]);
+
+  const handleBpm = (e) => {
+    setBpmInput(e.target.value);
+  };
+
+  // Clamp and normalize BPM to a number in allowed range and apply to state + audio engine
+  const applyBpm = () => {
+    const parsed = Number(bpmInput);
+    const safe = Number.isFinite(parsed) ? parsed : 120;
+    const clamped = Math.max(40, Math.min(240, Math.round(safe)));
+    setBpm(clamped);
+    // Reflect clamped value back into the input to show the applied BPM
+    setBpmInput(String(clamped));
+  };
 
   async function handleLogin() {
     const email = window.prompt('Email');
@@ -47,7 +63,16 @@ export default function TopBar() {
         <span className="badge">{project.name}</span>
       </div>
       <div className="row">
-        <input className="input" style={{ width: 72 }} value={bpmInput} onChange={handleBpm} onBlur={applyBpm} />
+        <input
+          className="input"
+          style={{ width: 72 }}
+          value={bpmInput}
+          onChange={handleBpm}
+          onBlur={applyBpm}
+          inputMode="numeric"
+          aria-label="Beats per minute"
+          title="Beats per minute (40 - 240)"
+        />
         <button className="btn" onClick={applyBpm}>Set BPM</button>
         <button
           className="btn"
