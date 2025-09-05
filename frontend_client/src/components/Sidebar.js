@@ -7,7 +7,7 @@ import storageService from '../services/storageService';
  * Sidebar shows track list and controls to add/remove tracks and import audio clips.
  */
 export default function Sidebar() {
-  const { project, addTrack, removeTrack, addClip, editor, setEditor, renameTrack } = useProject();
+  const { project, addTrack, removeTrack, addClip, editor, setEditor, renameTrack, audio } = useProject();
   const fileRef = useRef();
   const inputRef = useRef(null);
   const [editingId, setEditingId] = useState(null);
@@ -111,6 +111,22 @@ export default function Sidebar() {
                   >
                     Edit
                   </button>
+                  {t.type === 'midi' ? (
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        if (!audio) return;
+                        const instrument = t.instrument || { type: 'piano' };
+                        audio.setInstrument(t.id, instrument);
+                        audio.setTrackParams(t.id, { volume: t.volume ?? 0.8, pan: t.pan ?? 0 });
+                        audio.previewNote(t.id, 60, 110, 0.6); // C4
+                      }}
+                      aria-label={`Play C4 on ${t.name}`}
+                      title="Preview instrument (C4)"
+                    >
+                      ▶ C4
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className="btn"

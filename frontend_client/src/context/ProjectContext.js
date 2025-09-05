@@ -17,7 +17,7 @@ export function useProject() {
 
 /**
  * ProjectProvider owns application project data and actions,
- * and connects with audio engine for transport sync.
+ * and connects with audio engine for transport sync and instruments.
  */
 export function ProjectProvider({ children, audio }) {
   const { user } = useAuth();
@@ -26,7 +26,7 @@ export function ProjectProvider({ children, audio }) {
     id: null,
     name: 'Untitled Project',
     bpm: DEFAULT_BPM,
-    tracks: [], // { id, name, type: 'audio' | 'midi', clips: [], volume, pan, mute, solo, plugins: [] }
+    tracks: [], // { id, name, type: 'audio' | 'midi', clips: [], volume, pan, mute, solo, plugins: [], instrument? }
     createdAt: Date.now(),
     updatedAt: Date.now()
   }));
@@ -36,7 +36,7 @@ export function ProjectProvider({ children, audio }) {
   const autosaveTimer = useRef(null);
   const dirtyRef = useRef(false);
 
-  // Initialize with a default track
+  // Initialize with a default MIDI track
   useEffect(() => {
     if (project.tracks.length === 0) {
       addTrack('midi');
@@ -44,12 +44,13 @@ export function ProjectProvider({ children, audio }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync transport to audio engine
+  // Sync BPM to audio engine
   useEffect(() => {
     if (!audio) return;
     audio.setBpm(project.bpm);
   }, [audio, project.bpm]);
 
+  // Sync transport to audio engine
   useEffect(() => {
     if (!audio) return;
     if (transport.playing) {
@@ -58,6 +59,17 @@ export function ProjectProvider({ children, audio }) {
       audio.stop();
     }
   }, [audio, transport.playing]);
+
+  // Ensure track routing in audio engine is updated
+  useEffect(() => {
+    if (!audio) return;
+    project.tracks.forEach(t => {
+      if (t.type === 'midi') {
+        if (t.instrument) audio.setInstrument(t.id, t.instrument);
+      }
+      audio.setTrackParams(t.id, { volume: t.volume ?? 0.8, pan: t.pan ?? 0 });
+    });
+  }, [audio, project.tracks]);
 
   // Autosave
   useEffect(() => {
@@ -92,7 +104,8 @@ export function ProjectProvider({ children, audio }) {
         pan: 0,
         mute: false,
         solo: false,
-        plugins: []
+        plugins: [],
+        instrument: type === 'midi' ? { type: 'piano' } : undefined
       };
       const np = { ...prev, tracks: [...prev.tracks, t], updatedAt: Date.now() };
       dirtyRef.current = true;
@@ -183,6 +196,7 @@ export function ProjectProvider({ children, audio }) {
   }
 
   const value = useMemo(() => ({
+    audio,
     project, setProject,
     transport, setTransport,
     editor, setEditor,
@@ -190,7 +204,7 @@ export function ProjectProvider({ children, audio }) {
     setBpm, togglePlay, setPosition,
     loadFromFile, exportAudio, saveProject, loadProject,
     renameTrack
-  }), [project, transport, editor, addTrack, removeTrack, addClip, setBpm, togglePlay, setPosition, loadFromFile, exportAudio, saveProject, loadProject]);
+  }), [audio, project, transport, editor, addTrack, removeTrack, addClip, setBpm, togglePlay, setPosition, loadFromFile, exportAudio, saveProject, loadProject]);
 
   return (
     <ProjectContext.Provider value={value}>

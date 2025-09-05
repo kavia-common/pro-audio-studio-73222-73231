@@ -2,8 +2,9 @@ import { useEffect } from 'react';
 
 /**
  * Initializes Web MIDI access and routes incoming NOTE ON/OFF to audio engine.
+ * Notes are sent to the currently selected MIDI track (if any).
  */
-export default function useMIDI(audio) {
+export default function useMIDI(audio, getSelectedMidiTrackId) {
   useEffect(() => {
     if (!navigator.requestMIDIAccess) return;
 
@@ -13,12 +14,13 @@ export default function useMIDI(audio) {
       function handleMIDIMessage(message) {
         const [status, data1, data2] = message.data;
         const command = status & 0xf0;
+        const trackId = getSelectedMidiTrackId?.();
+        if (!trackId) return;
+
         if (command === 0x90 && data2 > 0) {
-          // Note on
-          // Here you could trigger synth via audio engine
-          // console.log('NOTE ON', data1, data2);
+          audio?.noteOn(trackId, data1, data2);
         } else if (command === 0x80 || (command === 0x90 && data2 === 0)) {
-          // Note off
+          audio?.noteOff(trackId, data1);
         }
       }
       access.inputs.forEach((input) => {
@@ -36,5 +38,5 @@ export default function useMIDI(audio) {
         accessRef.inputs.forEach(i => i.onmidimessage = null);
       }
     };
-  }, [audio]);
+  }, [audio, getSelectedMidiTrackId]);
 }

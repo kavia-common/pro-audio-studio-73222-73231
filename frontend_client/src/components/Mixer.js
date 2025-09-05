@@ -6,14 +6,20 @@ import { useProject } from '../context/ProjectContext';
  * Mixer shows channel strips with volume, pan, mute, and solo controls.
  */
 export default function Mixer() {
-  const { project, setProject } = useProject();
+  const { project, setProject, audio } = useProject();
 
   function updateTrack(id, patch) {
-    setProject(prev => ({
-      ...prev,
-      tracks: prev.tracks.map(t => t.id === id ? { ...t, ...patch } : t),
-      updatedAt: Date.now()
-    }));
+    setProject(prev => {
+      const nextTracks = prev.tracks.map(t => t.id === id ? { ...t, ...patch } : t);
+      const np = { ...prev, tracks: nextTracks, updatedAt: Date.now() };
+      // reflect in audio engine
+      const t = nextTracks.find(x => x.id === id);
+      if (t && audio) {
+        audio.setTrackParams(id, { volume: t.volume ?? 0.8, pan: t.pan ?? 0 });
+        if (t.type === 'midi' && t.instrument) audio.setInstrument(id, t.instrument);
+      }
+      return np;
+    });
   }
 
   return (
