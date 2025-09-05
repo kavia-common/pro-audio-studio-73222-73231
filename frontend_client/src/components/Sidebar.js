@@ -89,7 +89,15 @@ export default function Sidebar() {
                       value={nameDraft}
                       onChange={(e) => setNameDraft(e.target.value)}
                       onKeyDown={onKeyDown}
-                      onBlur={cancelEdit}
+                      onBlur={(e) => {
+                        // Prevent losing the draft when the user is clicking the Save button.
+                        // If focus is moving to a button with aria-label 'Save track name', we skip canceling.
+                        const next = e.relatedTarget;
+                        if (next && next.getAttribute && next.getAttribute('aria-label') === 'Save track name') {
+                          return;
+                        }
+                        cancelEdit();
+                      }}
                       style={{ width: 160 }}
                     />
                   ) : (
@@ -105,7 +113,9 @@ export default function Sidebar() {
                     Edit
                   </button>
                   <button
+                    type="button"
                     className="btn"
+                    tabIndex={0}
                     onClick={() => (isEditing ? confirmEdit() : startEdit(t))}
                     aria-label={isEditing ? 'Save track name' : 'Rename track'}
                     title={isEditing ? 'Save' : 'Rename'}
